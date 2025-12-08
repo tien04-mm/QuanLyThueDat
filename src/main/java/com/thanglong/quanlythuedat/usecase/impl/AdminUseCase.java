@@ -22,17 +22,25 @@ public class AdminUseCase implements IAdminUseCase {
     // --- CHỨC NĂNG 1: QUẢN LÝ BẢNG GIÁ (Admin cập nhật giá đất) ---
     @Override
     public BangGiaDatEntity capNhatBangGiaDat(BangGiaDatEntity bangGiaMoi) {
-        // Kiểm tra xem loại đất này đã có trong DB chưa
-        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByLoaiDat(bangGiaMoi.getLoaiDat());
+        // [SỬA LỖI QUAN TRỌNG]: 
+        // Thay vì tìm theo mỗi loaiDat, phải tìm chính xác theo 3 tiêu chí: Năm + Khu Vực + Mã Loại Đất
+        // Vì giá đất mỗi năm và mỗi khu vực là khác nhau.
+        
+        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByNamApDungAndKhuVucAndMaLoaiDat(
+                bangGiaMoi.getNamApDung(),
+                bangGiaMoi.getKhuVuc(),
+                bangGiaMoi.getMaLoaiDat()
+        );
         
         if (existing.isPresent()) {
-            // Nếu có rồi thì cập nhật giá mới
+            // Nếu đã có giá cho Năm/Khu vực/Loại đất này rồi -> Cập nhật giá tiền mới
             BangGiaDatEntity bangGiaCu = existing.get();
             bangGiaCu.setDonGiaM2(bangGiaMoi.getDonGiaM2());
-            bangGiaCu.setThueSuat(bangGiaMoi.getThueSuat());
+            
+            // Lưu ý: Thuế suất giờ nằm ở bảng LoaiDat, bảng BangGiaDat chỉ quản lý Đơn giá
             return bangGiaDatRepo.save(bangGiaCu);
         } else {
-            // Nếu chưa có thì thêm mới
+            // Nếu chưa có (ví dụ năm mới hoặc khu vực mới) -> Thêm mới
             return bangGiaDatRepo.save(bangGiaMoi);
         }
     }
@@ -40,15 +48,19 @@ public class AdminUseCase implements IAdminUseCase {
     // --- CHỨC NĂNG 2: QUẢN LÝ NGƯỜI DÙNG (Tạo Cán bộ thuế) ---
     @Override
     public NguoiDungEntity taoTaiKhoanCanBo(NguoiDungEntity canBoMoi) {
+        // Kiểm tra trùng tên đăng nhập
         if (nguoiDungRepo.existsByTenDangNhap(canBoMoi.getTenDangNhap())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
+        
         // Cưỡng chế vai trò là Cán bộ thuế
         canBoMoi.setVaiTro("CAN_BO");
-        // Mật khẩu demo mặc định (thực tế cần mã hóa)
-        if (canBoMoi.getMatKhau() == null) {
+        
+        // Mật khẩu demo mặc định (nếu Admin không nhập)
+        if (canBoMoi.getMatKhau() == null || canBoMoi.getMatKhau().isEmpty()) {
             canBoMoi.setMatKhau("123456"); 
         }
+        
         return nguoiDungRepo.save(canBoMoi);
     }
 }

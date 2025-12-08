@@ -9,11 +9,21 @@ import lombok.Data;
 public class NguoiDungEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // MaNguoiDung
 
+    @Column(unique = true, nullable = false)
     private String tenDangNhap;
+    
     private String matKhau;
     private String hoTen;
-    private String cccd;
+    
+    @Column(unique = true)
+    private String cccd; // Dùng để định danh pháp lý
+    
     private String vaiTro; // ADMIN, CAN_BO, CHU_DAT
+
+    // Thông tin liên hệ
+    private String diaChi;
+    private String sdt;
+    private String email;
 }

@@ -7,6 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface JpaBangGiaDatRepo extends JpaRepository<BangGiaDatEntity, Long> {
-    // Hàm tìm giá đất theo Loại đất (VD: Tìm giá của đất ODT)
-    Optional<BangGiaDatEntity> findByLoaiDat(String loaiDat);
+    // Tìm giá đất chính xác theo: Năm + Khu vực + Loại đất
+    Optional<BangGiaDatEntity> findByNamApDungAndKhuVucAndMaLoaiDat(Integer nam, String khuVuc, String maLoaiDat);
 }

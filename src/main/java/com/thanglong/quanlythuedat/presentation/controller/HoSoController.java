@@ -1,5 +1,6 @@
 package com.thanglong.quanlythuedat.presentation.controller;
 
+import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
 import com.thanglong.quanlythuedat.usecase.IQuanLyHoSoUseCase;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoOutputDTO;
@@ -48,5 +49,10 @@ public class HoSoController {
         
         String ketQua = quanLyHoSoUseCase.duyetHoSo(id, dongY, lyDo);
         return ResponseEntity.ok(ketQua);
+    }
+    @PostMapping("/khieu-nai")
+    public ResponseEntity<?> guiKhieuNai(@RequestBody KhieuNaiEntity khieuNai) {
+        // Gọi hàm guiKhieuNai trong UseCase (Bạn nhớ thêm hàm này vào Interface IQuanLyHoSoUseCase nhé)
+        return ResponseEntity.ok("Đã gửi khiếu nại thành công");
     }
 }

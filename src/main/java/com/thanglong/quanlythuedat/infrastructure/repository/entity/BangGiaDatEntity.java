@@ -11,7 +11,9 @@ public class BangGiaDatEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String loaiDat;   // Map với loai_dat_quy_hoach bên ThuaDat
-    private Double donGiaM2;
-    private Double thueSuat;
+    private Integer namApDung; // Giá đất thay đổi theo năm
+    private String khuVuc;     // Vị trí (VD: Quan 1, Huyen A...)
+    
+    private String maLoaiDat;  // Liên kết với bảng LoaiDat (Lưu mã string cho đơn giản)
+    private Double donGiaM2;   // Giá tiền 1m2
 }
