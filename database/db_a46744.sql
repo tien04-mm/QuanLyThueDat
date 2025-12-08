@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 08, 2025 at 11:12 AM
+-- Generation Time: Dec 08, 2025 at 12:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -123,18 +123,19 @@ CREATE TABLE `nguoi_dung` (
   `mat_khau` varchar(255) DEFAULT NULL,
   `sdt` varchar(255) DEFAULT NULL,
   `ten_dang_nhap` varchar(255) NOT NULL,
-  `vai_tro` varchar(255) DEFAULT NULL
+  `vai_tro` varchar(255) DEFAULT NULL,
+  `hoat_dong` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `nguoi_dung`
 --
 
-INSERT INTO `nguoi_dung` (`id`, `cccd`, `dia_chi`, `email`, `ho_ten`, `mat_khau`, `sdt`, `ten_dang_nhap`, `vai_tro`) VALUES
-(1, '001090000001', 'Hà Nội', 'admin@tax.gov.vn', 'Quản Trị Viên', '123456', '0901111111', 'admin', 'ADMIN'),
-(2, '001090000002', 'Hà Nội', 'canbo1@tax.gov.vn', 'Nguyễn Văn Cán Bộ', '123456', '0902222222', 'canbo1', 'CAN_BO'),
-(3, '001090000003', 'Số 5 Nguyễn Trãi', 'dan1@gmail.com', 'Trần Văn Chủ Đất', '123456', '0903333333', 'chudat1', 'CHU_DAT'),
-(4, '001090000004', 'Biệt thự Tây Hồ', 'dan2@gmail.com', 'Lê Thị Giàu Có', '123456', '0904444444', 'chudat2', 'CHU_DAT');
+INSERT INTO `nguoi_dung` (`id`, `cccd`, `dia_chi`, `email`, `ho_ten`, `mat_khau`, `sdt`, `ten_dang_nhap`, `vai_tro`, `hoat_dong`) VALUES
+(1, '001090000001', 'Hà Nội', 'admin@tax.gov.vn', 'Quản Trị Viên', '123456', '0901111111', 'admin', 'ADMIN', 1),
+(2, '001090000002', 'Hà Nội', 'canbo1@tax.gov.vn', 'Nguyễn Văn Cán Bộ', '123456', '0902222222', 'canbo1', 'CAN_BO', 1),
+(3, '001090000003', 'Số 5 Nguyễn Trãi', 'dan1@gmail.com', 'Trần Văn Chủ Đất', '123456', '0903333333', 'chudat1', 'CHU_DAT', 1),
+(4, '001090000004', 'Biệt thự Tây Hồ', 'dan2@gmail.com', 'Lê Thị Giàu Có', '123456', '0904444444', 'chudat2', 'CHU_DAT', 0);
 
 -- --------------------------------------------------------
 
@@ -160,7 +161,9 @@ CREATE TABLE `thua_dat` (
 INSERT INTO `thua_dat` (`id`, `dia_chi`, `dien_tich_goc`, `khu_vuc`, `ma_chu_so_huu`, `ma_loai_dat`, `so_thua`, `so_to`) VALUES
 (1, 'Số 1 Đại Lộ Thăng Long', 100, 'Huyen A', 3, 'ODT', 'Thửa 01', 'Tờ 10'),
 (2, 'Ngõ 5 Xã X', 500, 'Huyen A', 3, 'CLN', 'Thửa 02', 'Tờ 10'),
-(3, 'Khu Biệt Thự Ven Hồ', 200, 'Huyen A', 4, 'ODT', 'Thửa 05', 'Tờ 20');
+(3, 'Khu Biệt Thự Ven Hồ', 200, 'Huyen A', 4, 'ODT', 'Thửa 05', 'Tờ 20'),
+(4, 'Đất Mới Import', 200, 'Huyen A', 3, 'ONT', 'Thửa 99', 'Tờ 99'),
+(5, 'Đất Vườn Mới', 500, 'Huyen A', 3, 'CLN', 'Thửa 88', 'Tờ 88');
 
 --
 -- Indexes for dumped tables
@@ -236,7 +239,7 @@ ALTER TABLE `nguoi_dung`
 -- AUTO_INCREMENT for table `thua_dat`
 --
 ALTER TABLE `thua_dat`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

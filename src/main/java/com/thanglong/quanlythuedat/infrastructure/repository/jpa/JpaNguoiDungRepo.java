@@ -7,9 +7,13 @@ import java.util.Optional;
 
 @Repository
 public interface JpaNguoiDungRepo extends JpaRepository<NguoiDungEntity, Long> {
-    // Tìm người dùng để đăng nhập
+    
+    // Tìm để đăng nhập
     Optional<NguoiDungEntity> findByTenDangNhapAndMatKhau(String tenDangNhap, String matKhau);
     
-    // Kiểm tra trùng tên đăng nhập khi đăng ký
+    // Check trùng tên đăng nhập
     boolean existsByTenDangNhap(String tenDangNhap);
+
+    // [MỚI] Check trùng CCCD (Khớp Activity Đăng ký)
+    boolean existsByCccd(String cccd);
 }

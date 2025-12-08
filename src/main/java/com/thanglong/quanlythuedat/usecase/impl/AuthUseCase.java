@@ -12,20 +12,33 @@ public class AuthUseCase {
     @Autowired
     private JpaNguoiDungRepo nguoiDungRepo;
 
-    // Chức năng Đăng nhập
     public NguoiDungEntity dangNhap(LoginDTO loginRequest) {
-        // Tìm trong DB xem có ai khớp username và password không
-        return nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
+        NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
                 .orElseThrow(() -> new RuntimeException("Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu!"));
+        
+        // [MỚI] Kiểm tra trạng thái Khóa (Theo Activity Diagram)
+        if (Boolean.FALSE.equals(user.getHoatDong())) {
+            throw new RuntimeException("Tài khoản này đã bị KHÓA do vi phạm quy định!");
+        }
+
+        return user;
     }
 
-    // Chức năng Đăng ký (Dành cho Chủ đất mới)
     public NguoiDungEntity dangKy(NguoiDungEntity nguoiMoi) {
+        // Check 1: Trùng tên đăng nhập
         if (nguoiDungRepo.existsByTenDangNhap(nguoiMoi.getTenDangNhap())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
-        // Mặc định đăng ký mới là CHU_DAT
+        
+        // [MỚI] Check 2: Trùng CCCD (Theo Activity Diagram)
+        if (nguoiDungRepo.existsByCccd(nguoiMoi.getCccd())) {
+            throw new RuntimeException("Số CCCD này đã được đăng ký tài khoản!");
+        }
+
+        // Thiết lập mặc định
         nguoiMoi.setVaiTro("CHU_DAT");
+        nguoiMoi.setHoatDong(true); // Mặc định là Hoạt động
+        
         return nguoiDungRepo.save(nguoiMoi);
     }
 }
