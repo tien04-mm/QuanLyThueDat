@@ -16,13 +16,11 @@ public class ThuaDatUseCase implements IThuaDatUseCase {
 
     @Override
     public List<ThuaDatEntity> traCuuDatCuaToi(Long maChuSoHuu) {
-        // Bây giờ JpaRepo đã có hàm này, code sẽ hết lỗi
         return thuaDatRepo.findByMaChuSoHuu(maChuSoHuu);
     }
 
     @Override
     public ThuaDatEntity timThuaDat(String soTo, String soThua) {
-        // Hàm này cũng đã được khai báo trong JpaRepo
         return thuaDatRepo.findBySoToAndSoThua(soTo, soThua)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy dữ liệu đất với Số tờ/Số thửa này!"));
     }
@@ -32,12 +30,10 @@ public class ThuaDatUseCase implements IThuaDatUseCase {
         ThuaDatEntity dat = thuaDatRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thửa đất!"));
 
-        // Cho phép Admin sửa sai thông tin
         if (dataMoi.getDienTichGoc() != null) dat.setDienTichGoc(dataMoi.getDienTichGoc());
         if (dataMoi.getMaLoaiDat() != null) dat.setMaLoaiDat(dataMoi.getMaLoaiDat());
-        if (dataMoi.getDiaChi() != null) dat.setDiaChi(dataMoi.getDiaChi());
-        if (dataMoi.getKhuVuc() != null) dat.setKhuVuc(dataMoi.getKhuVuc());
-        // Có thể bổ sung update soTo, soThua nếu cần
+        if (dataMoi.getDiaChiChiTiet() != null) dat.setDiaChiChiTiet(dataMoi.getDiaChiChiTiet());
+        if (dataMoi.getMaKhuVuc() != null) dat.setMaKhuVuc(dataMoi.getMaKhuVuc());
         if (dataMoi.getSoTo() != null) dat.setSoTo(dataMoi.getSoTo());
         if (dataMoi.getSoThua() != null) dat.setSoThua(dataMoi.getSoThua());
 

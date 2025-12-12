@@ -9,23 +9,27 @@ import java.time.LocalDateTime;
 @Data
 public class HoSoEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ma_ho_so") 
+    @Column(name = "ma_ho_so")
     private Long maHoSo;
 
-    @Column(nullable = false) private Long maNguoiKhai;
+    @Column(nullable = false) private Long maNguoiKhai; // map với maNguoiDung
     @Column(nullable = false) private Long maThuaDat;
-    @Column(nullable = false) private Integer namKhaiThue;
-    @Column(nullable = false) private Double dienTichKhaiBao;
-    @Column(nullable = false) private String mucDichSuDung;
-
-    private String fileDinhKem; // File upload
-    private Double soTienThue;
-    private LocalDateTime ngayNop;
-    @Column(nullable = false) private String trangThai;
     
-    @Column(length = 1000) private String ghiChu; 
-    @Column(length = 2000) private String lichSuXuLy; // Log lịch sử
+    private Integer namKhaiThue;
+    private Double dienTichKhaiBao;
+    private String mucDichSuDungKhaiBao; // Khớp UML
 
+    // Các trường tính toán
+    private Double tongGiaTriDat;
+    private Double soTienPhaiNop; // Thay cho soTienThue
+    
+    private Boolean dauHieuGianLan; // Thay cho text logic cũ
+    private String trangThai; // CHO_DUYET...
+    
+    private String fileDinhKemGiaoDich; // Khớp UML
+    private LocalDateTime ngayNop = LocalDateTime.now();
+    private LocalDateTime ngayDuyet;
+    
     public String getMaHienThi() {
         return "HS" + namKhaiThue + "-" + String.format("%03d", maHoSo);
     }

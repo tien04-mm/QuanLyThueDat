@@ -19,69 +19,71 @@ import java.util.stream.Collectors;
 @Service
 public class AdminUseCase implements IAdminUseCase {
 
-    @Autowired private JpaBangGiaDatRepo bangGiaDatRepo;
     @Autowired private JpaNguoiDungRepo nguoiDungRepo;
+    @Autowired private JpaBangGiaDatRepo bangGiaDatRepo;
     @Autowired private JpaThuaDatRepo thuaDatRepo;
 
-    @Override
-    public BangGiaDatEntity capNhatBangGiaDat(BangGiaDatEntity bangGiaMoi) {
-        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByNamApDungAndKhuVucAndMaLoaiDat(
-                bangGiaMoi.getNamApDung(), bangGiaMoi.getKhuVuc(), bangGiaMoi.getMaLoaiDat());
-        
-        if (existing.isPresent()) {
-            BangGiaDatEntity bangGiaCu = existing.get();
-            bangGiaCu.setDonGiaM2(bangGiaMoi.getDonGiaM2());
-            return bangGiaDatRepo.save(bangGiaCu);
-        } else {
-            return bangGiaDatRepo.save(bangGiaMoi);
-        }
-    }
-
-    // --- LOGIC QUẢN LÝ NGƯỜI DÙNG ---
+    // ==========================================================
+    // PHẦN 1: QUẢN LÝ TÀI KHOẢN
+    // ==========================================================
 
     @Override
     public NguoiDungEntity taoTaiKhoanNhanVien(NguoiDungEntity nvMoi) {
+        // Kiểm tra trùng tên đăng nhập
         if (nguoiDungRepo.existsByTenDangNhap(nvMoi.getTenDangNhap())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
-        if (nvMoi.getCccd() != null && nguoiDungRepo.existsByCccd(nvMoi.getCccd())) {
-            throw new RuntimeException("CCCD đã tồn tại!");
+        // Kiểm tra trùng Số định danh (Logic mới)
+        if (nvMoi.getSoDinhDanh() != null && nguoiDungRepo.existsBySoDinhDanh(nvMoi.getSoDinhDanh())) {
+            throw new RuntimeException("Số định danh (CCCD) đã tồn tại!");
         }
 
-        String roleYeuCau = nvMoi.getVaiTro();
-        if ("QL_DAT_DAI".equals(roleYeuCau)) {
-            nvMoi.setVaiTro("QL_DAT_DAI"); 
-        } else if ("CAN_BO".equals(roleYeuCau)) {
-            nvMoi.setVaiTro("CAN_BO");
-        } else {
+        // Mặc định vai trò
+        String role = nvMoi.getVaiTro();
+        if (role == null || role.isEmpty()) {
             nvMoi.setVaiTro("CAN_BO");
         }
 
-        nvMoi.setHoatDong(true); // Nhân viên do Admin tạo thì Active luôn
-        if (nvMoi.getMatKhau() == null || nvMoi.getMatKhau().isEmpty()) {
-            nvMoi.setMatKhau("123456"); 
+        // Mặc định trạng thái (Admin tạo thì Active luôn)
+        nvMoi.setTrangThai(true); 
+        
+        // Mật khẩu mặc định
+        if (nvMoi.getMatKhau() == null) {
+            nvMoi.setMatKhau("123456");
         }
 
         return nguoiDungRepo.save(nvMoi);
     }
 
-    // [BỔ SUNG IMPLEMENT] Tìm kiếm và lọc người dùng
-    public List<NguoiDungEntity> timKiemNguoiDung(String vaiTro, String keyword) {
-        List<NguoiDungEntity> allUsers = nguoiDungRepo.findAll();
-        
-        return allUsers.stream()
-            .filter(u -> vaiTro == null || u.getVaiTro().equalsIgnoreCase(vaiTro))
-            .filter(u -> keyword == null || 
-                        u.getHoTen().toLowerCase().contains(keyword.toLowerCase()) ||
-                        u.getCccd().contains(keyword))
-            .collect(Collectors.toList());
+    @Override
+    public void pheDuyetTaiKhoan(Long maNguoiDung) {
+        NguoiDungEntity user = nguoiDungRepo.findById(maNguoiDung)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+        user.setTrangThai(true); // Kích hoạt
+        nguoiDungRepo.save(user);
     }
 
-    // [BỔ SUNG IMPLEMENT] Cập nhật thông tin
-    public NguoiDungEntity capNhatThongTin(Long id, NguoiDungEntity dataMoi) {
-        NguoiDungEntity user = nguoiDungRepo.findById(id)
+    @Override
+    public void khoaTaiKhoan(Long maNguoiDung) {
+        NguoiDungEntity user = nguoiDungRepo.findById(maNguoiDung)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
-        
+        user.setTrangThai(false); // Khóa
+        nguoiDungRepo.save(user);
+    }
+
+    @Override
+    public void xoaNguoiDung(Long maNguoiDung) {
+        if (!nguoiDungRepo.existsById(maNguoiDung)) {
+            throw new RuntimeException("Không tìm thấy người dùng để xóa!");
+        }
+        nguoiDungRepo.deleteById(maNguoiDung);
+    }
+
+    @Override
+    public NguoiDungEntity capNhatThongTin(Long maNguoiDung, NguoiDungEntity dataMoi) {
+        NguoiDungEntity user = nguoiDungRepo.findById(maNguoiDung)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+
         if (dataMoi.getHoTen() != null) user.setHoTen(dataMoi.getHoTen());
         if (dataMoi.getSdt() != null) user.setSdt(dataMoi.getSdt());
         if (dataMoi.getEmail() != null) user.setEmail(dataMoi.getEmail());
@@ -90,64 +92,82 @@ public class AdminUseCase implements IAdminUseCase {
         return nguoiDungRepo.save(user);
     }
 
-    // [BỔ SUNG IMPLEMENT] Phê duyệt đăng ký
-    public void pheDuyetTaiKhoan(Long id) {
-        NguoiDungEntity user = nguoiDungRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản!"));
-        user.setHoatDong(true); // Kích hoạt tài khoản
-        nguoiDungRepo.save(user);
+    @Override
+    public List<NguoiDungEntity> timKiemNguoiDung(String vaiTro, String keyword) {
+        List<NguoiDungEntity> all = nguoiDungRepo.findAll();
+        
+        return all.stream()
+                .filter(u -> vaiTro == null || u.getVaiTro().equalsIgnoreCase(vaiTro))
+                .filter(u -> keyword == null || 
+                        (u.getHoTen() != null && u.getHoTen().toLowerCase().contains(keyword.toLowerCase())) ||
+                        (u.getSoDinhDanh() != null && u.getSoDinhDanh().contains(keyword)))
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================================
+    // PHẦN 2: QUẢN LÝ DỮ LIỆU ĐẤT ĐAI
+    // ==========================================================
+
+    @Override
+    public BangGiaDatEntity capNhatBangGiaDat(BangGiaDatEntity bangGiaMoi) {
+        // Tìm giá đất theo logic mới (Có maKhuVuc)
+        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByNamApDungAndMaKhuVucAndMaLoaiDat(
+                bangGiaMoi.getNamApDung(), 
+                bangGiaMoi.getMaKhuVuc(), // Dùng maKhuVuc
+                bangGiaMoi.getMaLoaiDat()
+        );
+
+        if (existing.isPresent()) {
+            BangGiaDatEntity cu = existing.get();
+            cu.setDonGiaM2(bangGiaMoi.getDonGiaM2());
+            return bangGiaDatRepo.save(cu);
+        } else {
+            return bangGiaDatRepo.save(bangGiaMoi);
+        }
     }
 
     @Override
-    public void khoaTaiKhoan(Long id) {
-        NguoiDungEntity user = nguoiDungRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
-        user.setHoatDong(false);
-        nguoiDungRepo.save(user);
+    public void xoaThuaDat(Long maThuaDat) {
+        if (!thuaDatRepo.existsById(maThuaDat)) {
+            throw new RuntimeException("Không tìm thấy thửa đất!");
+        }
+        thuaDatRepo.deleteById(maThuaDat);
     }
-
-    @Override
-    public void xoaNguoiDung(Long id) {
-        if (!nguoiDungRepo.existsById(id)) throw new RuntimeException("Không tìm thấy user!");
-        nguoiDungRepo.deleteById(id);
-    }
-
-    // --- LOGIC QUẢN LÝ ĐẤT ĐAI (Import Excel) ---
 
     @Override
     public String importDuLieuDatDai(MultipartFile file) throws IOException {
-        List<ThuaDatEntity> danhSachDat = new ArrayList<>();
+        List<ThuaDatEntity> danhSach = new ArrayList<>();
+        
         try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; 
+
                 ThuaDatEntity dat = new ThuaDatEntity();
-                
-                // Mapping: 0=SoTo, 1=SoThua, 2=DiaChi, 3=KhuVuc, 4=DienTich, 5=LoaiDat, 6=IDChu
+                // Map cột Excel: 0=SoTo, 1=SoThua, 2=DiaChi, 3=MaKhuVuc, 4=DienTich, 5=MaLoaiDat
                 dat.setSoTo(getCellValue(row, 0));
                 dat.setSoThua(getCellValue(row, 1));
-                dat.setDiaChi(getCellValue(row, 2));
-                dat.setKhuVuc(getCellValue(row, 3));
+                dat.setDiaChiChiTiet(getCellValue(row, 2)); // Khớp Entity mới
+                dat.setMaKhuVuc(getCellValue(row, 3));      // Khớp Entity mới
                 
-                Cell cellDienTich = row.getCell(4);
-                if (cellDienTich != null) dat.setDienTichGoc(cellDienTich.getNumericCellValue());
+                Cell cellDT = row.getCell(4);
+                if (cellDT != null) dat.setDienTichGoc(cellDT.getNumericCellValue());
                 
                 dat.setMaLoaiDat(getCellValue(row, 5));
-                
-                Cell cellChu = row.getCell(6);
-                if (cellChu != null) dat.setMaChuSoHuu((long) cellChu.getNumericCellValue());
+                dat.setNgayTao(java.time.LocalDateTime.now());
 
-                danhSachDat.add(dat);
+                danhSach.add(dat);
             }
         }
-        if (!danhSachDat.isEmpty()) {
-            thuaDatRepo.saveAll(danhSachDat);
-            return "Import thành công " + danhSachDat.size() + " thửa đất!";
+
+        if (!danhSach.isEmpty()) {
+            thuaDatRepo.saveAll(danhSach);
+            return "Import thành công " + danhSach.size() + " dòng dữ liệu!";
         } else {
-            return "File rỗng hoặc không đọc được dữ liệu!";
+            return "File rỗng hoặc lỗi định dạng!";
         }
     }
-    
+
     private String getCellValue(Row row, int index) {
         Cell cell = row.getCell(index);
         if (cell == null) return "";
@@ -156,11 +176,5 @@ public class AdminUseCase implements IAdminUseCase {
             case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
             default -> "";
         };
-    }
-
-    @Override
-    public void xoaThuaDat(Long id) {
-        if (!thuaDatRepo.existsById(id)) throw new RuntimeException("Không tìm thấy đất!");
-        thuaDatRepo.deleteById(id);
     }
 }

@@ -19,20 +19,14 @@ import java.util.Map;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AdminController {
 
-    @Autowired
-    private IAdminUseCase adminUseCase;
+    @Autowired private IAdminUseCase adminUseCase;
+    @Autowired private IThuaDatUseCase thuaDatUseCase;
+    @Autowired private IQuanLyHoSoUseCase quanLyHoSoUseCase;
 
-    @Autowired
-    private IThuaDatUseCase thuaDatUseCase;
+    // ==========================================================
+    // 1. QUẢN LÝ DỮ LIỆU ĐẤT ĐAI
+    // ==========================================================
 
-    @Autowired
-    private IQuanLyHoSoUseCase quanLyHoSoUseCase; // Inject thêm để lấy số liệu báo cáo
-
-    // ========================================================================
-    // 1. NHÓM CHỨC NĂNG QUẢN LÝ ĐẤT ĐAI & BẢNG GIÁ
-    // ========================================================================
-
-    // Cập nhật bảng giá đất (để tính thuế)
     @PostMapping("/banggia")
     public ResponseEntity<?> capNhatGiaDat(@RequestBody BangGiaDatEntity bangGia) {
         try {
@@ -42,18 +36,16 @@ public class AdminController {
         }
     }
 
-    // Import dữ liệu đất đai từ file Excel (Master Data)
     @PostMapping(value = "/import-dat-dai", consumes = {"multipart/form-data"})
     public ResponseEntity<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String ketQua = adminUseCase.importDuLieuDatDai(file);
-            return ResponseEntity.ok(ketQua);
+            return ResponseEntity.ok(adminUseCase.importDuLieuDatDai(file));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi Import: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 
-    // Cập nhật thông tin thửa đất thủ công (Sửa sai sót)
+    // [LƯU Ý] Hàm này dùng IThuaDatUseCase (Logic cập nhật đất lẻ)
     @PutMapping("/thua-dat/{id}")
     public ResponseEntity<?> capNhatThuaDat(@PathVariable Long id, @RequestBody ThuaDatEntity datMoi) {
         try {
@@ -63,22 +55,20 @@ public class AdminController {
         }
     }
 
-    // Xóa thửa đất
     @DeleteMapping("/thua-dat/{id}")
     public ResponseEntity<String> xoaThuaDat(@PathVariable Long id) {
         try {
             adminUseCase.xoaThuaDat(id);
-            return ResponseEntity.ok("Đã xóa thửa đất thành công!");
+            return ResponseEntity.ok("Đã xóa!");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi xóa: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // ========================================================================
-    // 2. NHÓM CHỨC NĂNG QUẢN LÝ NGƯỜI DÙNG (ADMIN & USER)
-    // ========================================================================
+    // ==========================================================
+    // 2. QUẢN LÝ NGƯỜI DÙNG
+    // ==========================================================
 
-    // Tạo tài khoản nội bộ (Cán bộ thuế / Quản lý đất đai)
     @PostMapping("/tao-nhan-vien")
     public ResponseEntity<?> taoNhanVien(@RequestBody NguoiDungEntity nhanVien) {
         try {
@@ -88,69 +78,61 @@ public class AdminController {
         }
     }
 
-    // Phê duyệt tài khoản người dân mới đăng ký
     @PutMapping("/nguoi-dung/{id}/phe-duyet")
-    public ResponseEntity<?> pheDuyetTaiKhoan(@PathVariable Long id) {
+    public ResponseEntity<?> pheDuyet(@PathVariable Long id) {
         try {
             adminUseCase.pheDuyetTaiKhoan(id);
-            return ResponseEntity.ok(Map.of("message", "Đã phê duyệt tài khoản thành công!"));
+            return ResponseEntity.ok(Map.of("message", "Đã duyệt thành công"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Tìm kiếm và xem danh sách người dùng (Lọc theo vai trò/tên)
+    @PutMapping("/nguoi-dung/{id}/khoa")
+    public ResponseEntity<?> khoaTaiKhoan(@PathVariable Long id) {
+        try {
+            adminUseCase.khoaTaiKhoan(id);
+            return ResponseEntity.ok(Map.of("message", "Đã khóa tài khoản"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/nguoi-dung/{id}")
+    public ResponseEntity<?> xoaNguoiDung(@PathVariable Long id) {
+        try {
+            adminUseCase.xoaNguoiDung(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa người dùng"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/nguoi-dung")
-    public ResponseEntity<List<NguoiDungEntity>> layDanhSachNguoiDung(
-            @RequestParam(required = false) String vaiTro,
+    public ResponseEntity<List<NguoiDungEntity>> layDanhSach(
+            @RequestParam(required = false) String vaiTro, 
             @RequestParam(required = false) String keyword) {
         return ResponseEntity.ok(adminUseCase.timKiemNguoiDung(vaiTro, keyword));
     }
 
-    // Cập nhật thông tin người dùng (SĐT, Email, Địa chỉ)
     @PutMapping("/nguoi-dung/{id}")
-    public ResponseEntity<?> capNhatThongTin(@PathVariable Long id, @RequestBody NguoiDungEntity dataMoi) {
+    public ResponseEntity<?> capNhatUser(@PathVariable Long id, @RequestBody NguoiDungEntity data) {
         try {
-            return ResponseEntity.ok(adminUseCase.capNhatThongTin(id, dataMoi));
+            return ResponseEntity.ok(adminUseCase.capNhatThongTin(id, data));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Khóa tài khoản (Khi vi phạm)
-    @PutMapping("/nguoi-dung/{id}/khoa")
-    public ResponseEntity<String> khoaTaiKhoan(@PathVariable Long id) {
-        try {
-            adminUseCase.khoaTaiKhoan(id);
-            return ResponseEntity.ok("Đã khóa tài khoản thành công!");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
-    }
+    // ==========================================================
+    // 3. BÁO CÁO THỐNG KÊ
+    // ==========================================================
 
-    // Xóa người dùng vĩnh viễn
-    @DeleteMapping("/nguoi-dung/{id}")
-    public ResponseEntity<String> xoaNguoiDung(@PathVariable Long id) {
-        try {
-            adminUseCase.xoaNguoiDung(id);
-            return ResponseEntity.ok("Đã xóa người dùng thành công!");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi xóa: " + e.getMessage());
-        }
-    }
-
-    // ========================================================================
-    // 3. NHÓM CHỨC NĂNG BÁO CÁO - THỐNG KÊ (MỚI)
-    // ========================================================================
-
-    // Xem báo cáo thống kê chi tiết (Tổng thu, Nợ thuế, Số lượng hồ sơ...)
-    // Hỗ trợ lọc theo Năm và Khu vực
     @GetMapping("/thong-ke")
-    public ResponseEntity<?> xemBaoCaoThongKe(
-            @RequestParam(required = false) Integer nam,
+    public ResponseEntity<?> xemBaoCao(
+            @RequestParam(required = false) Integer nam, 
             @RequestParam(required = false) String khuVuc) {
         try {
-            // Gọi sang UseCase Hồ sơ để lấy số liệu thực tế
             return ResponseEntity.ok(quanLyHoSoUseCase.layBaoCaoThongKe(nam, khuVuc));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

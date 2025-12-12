@@ -3,17 +3,16 @@ package com.thanglong.quanlythuedat.presentation.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.HoSoEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
+import com.thanglong.quanlythuedat.infrastructure.repository.entity.NhatKyXuLyEntity;
 import com.thanglong.quanlythuedat.usecase.IQuanLyHoSoUseCase;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public class HoSoController {
     @Autowired
     private IQuanLyHoSoUseCase quanLyHoSoUseCase;
 
-    // 1. Nộp hồ sơ (Kèm file đính kèm)
+    // Nộp hồ sơ
     @PostMapping(value = "/nop-to-khai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> nopHoSo(
             @RequestPart("data") String dataJson,
@@ -39,7 +38,12 @@ public class HoSoController {
         }
     }
 
-    // 2. Tra cứu trạng thái theo Mã hồ sơ
+    // [QUAN TRỌNG] Xem lịch sử xử lý (Trả về List Entity)
+    @GetMapping("/{id}/lich-su-xu-ly")
+    public ResponseEntity<List<NhatKyXuLyEntity>> xemLichSuXuLy(@PathVariable Long id) {
+        return ResponseEntity.ok(quanLyHoSoUseCase.xemLichSuXuLy(id));
+    }
+
     @GetMapping("/tra-cuu/{maHoSo}")
     public ResponseEntity<?> traCuuTrangThai(@PathVariable Long maHoSo) {
         try {
@@ -49,19 +53,11 @@ public class HoSoController {
         }
     }
 
-    // 3. Xem lịch sử xử lý (Log)
-    @GetMapping("/{id}/lich-su-xu-ly")
-    public ResponseEntity<?> xemLichSuXuLy(@PathVariable Long id) {
-        return ResponseEntity.ok(Map.of("lichSu", quanLyHoSoUseCase.layLichSuXuLy(id)));
-    }
-
-    // 4. Duyệt hồ sơ
     @PostMapping("/duyet")
     public ResponseEntity<String> duyetHoSo(@RequestParam Long id, @RequestParam boolean dongY, @RequestParam String lyDo) {
         return ResponseEntity.ok(quanLyHoSoUseCase.duyetHoSo(id, dongY, lyDo));
     }
 
-    // 5. Thanh toán thuế
     @PostMapping("/{id}/thanh-toan")
     public ResponseEntity<?> thanhToan(@PathVariable Long id) {
         try {
@@ -72,11 +68,8 @@ public class HoSoController {
         }
     }
 
-    // 6. Gửi khiếu nại (Kèm file minh chứng)
     @PostMapping(value = "/khieu-nai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> guiKhieuNai(
-            @RequestPart("data") String dataJson,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+    public ResponseEntity<?> guiKhieuNai(@RequestPart("data") String dataJson, @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             KhieuNaiEntity knData = mapper.readValue(dataJson, KhieuNaiEntity.class);
@@ -86,19 +79,6 @@ public class HoSoController {
         }
     }
 
-    // 7. Xuất Excel
-    @GetMapping("/xuat-excel")
-    public ResponseEntity<InputStreamResource> xuatExcel() {
-        ByteArrayInputStream in = quanLyHoSoUseCase.xuatBaoCaoExcel();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment; filename=baocao_thue.xlsx");
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(new InputStreamResource(in));
-    }
-
-    // 8. Xem danh sách
     @GetMapping("/danh-sach")
     public ResponseEntity<List<HoSoEntity>> xemDanhSach() {
         return ResponseEntity.ok(quanLyHoSoUseCase.layDanhSachHoSo());

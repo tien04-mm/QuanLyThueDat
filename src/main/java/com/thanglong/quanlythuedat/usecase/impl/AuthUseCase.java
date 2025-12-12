@@ -15,28 +15,28 @@ public class AuthUseCase {
     public NguoiDungEntity dangNhap(LoginDTO loginRequest) {
         NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
                 .orElseThrow(() -> new RuntimeException("Sai tài khoản hoặc mật khẩu!"));
-        if (Boolean.FALSE.equals(user.getHoatDong())) {
-            throw new RuntimeException("Tài khoản chưa được duyệt hoặc bị khóa!");
+        
+        // Kiểm tra trạng thái (True = Active)
+        if (Boolean.FALSE.equals(user.getTrangThai())) {
+            throw new RuntimeException("Tài khoản chưa được kích hoạt hoặc bị khóa!");
         }
         return user;
     }
 
-    // [CẬP NHẬT] Đăng ký nhận file ảnh
     public NguoiDungEntity dangKy(NguoiDungEntity nguoiMoi, MultipartFile file) {
         if (nguoiDungRepo.existsByTenDangNhap(nguoiMoi.getTenDangNhap())) 
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
-        if (nguoiDungRepo.existsByCccd(nguoiMoi.getCccd())) 
-            throw new RuntimeException("CCCD đã tồn tại!");
+        
+        // Sửa: Kiểm tra trùng số định danh (thay vì cccd)
+        if (nguoiDungRepo.existsBySoDinhDanh(nguoiMoi.getSoDinhDanh())) 
+            throw new RuntimeException("Số định danh (CCCD) đã tồn tại!");
 
-        // Lưu file ảnh giấy tờ (Logic đơn giản: Lưu tên file)
         if (file != null && !file.isEmpty()) {
-            String fileName = "giayto_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            // TODO: Nếu muốn lưu thật thì dùng FileOutputStream để ghi ra ổ cứng
-            nguoiMoi.setAnhGiayTo(fileName);
+            nguoiMoi.setAnhGiayTo("giayto_" + System.currentTimeMillis() + "_" + file.getOriginalFilename());
         }
 
         nguoiMoi.setVaiTro("CHU_DAT");
-        nguoiMoi.setHoatDong(false); // Đăng ký xong phải chờ Admin duyệt
+        nguoiMoi.setTrangThai(false); // Chờ duyệt
         return nguoiDungRepo.save(nguoiMoi);
     }
 }

@@ -8,18 +8,16 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IAdminUseCase {
-    // Nhóm Đất đai
+    // --- 1. QUẢN LÝ NGƯỜI DÙNG ---
+    NguoiDungEntity taoTaiKhoanNhanVien(NguoiDungEntity nhanVien);
+    void pheDuyetTaiKhoan(Long maNguoiDung);
+    void khoaTaiKhoan(Long maNguoiDung);
+    void xoaNguoiDung(Long maNguoiDung);
+    NguoiDungEntity capNhatThongTin(Long maNguoiDung, NguoiDungEntity dataMoi);
+    List<NguoiDungEntity> timKiemNguoiDung(String vaiTro, String keyword);
+
+    // --- 2. QUẢN LÝ ĐẤT ĐAI ---
     BangGiaDatEntity capNhatBangGiaDat(BangGiaDatEntity bangGia);
     String importDuLieuDatDai(MultipartFile file) throws IOException;
-    void xoaThuaDat(Long id);
-
-    // Nhóm Người dùng (Cũ)
-    NguoiDungEntity taoTaiKhoanNhanVien(NguoiDungEntity nhanVien);
-    void khoaTaiKhoan(Long id);
-    void xoaNguoiDung(Long id);
-
-    // [MỚI] Các hàm bổ sung để sửa lỗi AdminController
-    List<NguoiDungEntity> timKiemNguoiDung(String vaiTro, String keyword);
-    NguoiDungEntity capNhatThongTin(Long id, NguoiDungEntity dataMoi);
-    void pheDuyetTaiKhoan(Long id);
+    void xoaThuaDat(Long maThuaDat);
 }

@@ -2,31 +2,24 @@ package com.thanglong.quanlythuedat.infrastructure.repository.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "thua_dat")
 @Data
 public class ThuaDatEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long maThuaDat; // Đổi id thành maThuaDat
 
-    @Column(nullable = false)
     private String soTo;
-
-    @Column(nullable = false)
     private String soThua;
-
-    private String diaChi;
+    private String diaChiChiTiet; // Đổi tên cho khớp UML
     
-    @Column(nullable = false)
-    private String khuVuc; // Quan trọng để tính giá đất
+    @Column(nullable = false) private String maKhuVuc; // Quan trọng để tính hệ số K
     
-    @Column(nullable = false)
-    private Double dienTichGoc; 
-
-    @Column(nullable = false)
-    private String maLoaiDat; // ODT, CLN...
-    
-    private Long maChuSoHuu;  // Có thể null nếu đất công hoặc chưa cấp sổ
+    private Double dienTichGoc;
+    private String maLoaiDat;
+    private String mucDichSuDung;
+    private Long maChuSoHuu;
+    private LocalDateTime ngayTao = LocalDateTime.now();
 }

@@ -9,10 +9,10 @@ import java.util.Optional;
 @Repository
 public interface JpaBangGiaDatRepo extends JpaRepository<BangGiaDatEntity, Long> {
     
-    // Tìm giá đất cụ thể theo: Năm + Khu Vực + Loại Đất
-    Optional<BangGiaDatEntity> findByNamApDungAndKhuVucAndMaLoaiDat(
+    // [QUAN TRỌNG] Hàm này phải khớp tên biến trong UseCase
+    Optional<BangGiaDatEntity> findByNamApDungAndMaKhuVucAndMaLoaiDat(
             Integer namApDung, 
-            String khuVuc, 
+            String maKhuVuc, 
             String maLoaiDat
     );
 }
