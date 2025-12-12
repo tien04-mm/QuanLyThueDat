@@ -8,8 +8,12 @@ import lombok.Data;
 @Data
 public class LoaiDatEntity {
     @Id
-    private String maLoaiDat; // PK: ODT, ONT, CLN (Nhập tay, không tự tăng)
+    @Column(length = 20)
+    private String maLoaiDat; // PK: ODT, ONT...
 
-    private String tenLoaiDat; // Đất ở đô thị, Đất trồng cây...
-    private Double thueSuat;   // % Thuế (VD: 0.0003)
+    @Column(nullable = false)
+    private String tenLoaiDat; 
+
+    @Column(nullable = false)
+    private Double thueSuat; // Bắt buộc có thuế suất
 }

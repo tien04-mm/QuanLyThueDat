@@ -14,21 +14,22 @@ public class NguoiDungEntity {
     @Column(unique = true, nullable = false)
     private String tenDangNhap;
     
+    @Column(nullable = false)
     private String matKhau;
+
+    @Column(nullable = false)
     private String hoTen;
     
-    @Column(unique = true)
-    private String cccd; // Dùng để định danh pháp lý
+    @Column(unique = true, nullable = false)
+    private String cccd; // Căn cước công dân (Bắt buộc)
     
+    @Column(nullable = false)
     private String vaiTro; // ADMIN, CAN_BO, CHU_DAT
 
-    // Thông tin liên hệ
     private String diaChi;
     private String sdt;
     private String email;
 
-    // [MỚI] Trạng thái: true = Hoạt động, false = Bị khóa
-    // Mặc định khi tạo mới là true
     @Column(columnDefinition = "boolean default true")
-    private Boolean hoatDong = true;
+    private Boolean hoatDong = true; // Mặc định là True
 }

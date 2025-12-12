@@ -1,58 +1,84 @@
 package com.thanglong.quanlythuedat.presentation.controller;
 
+import com.thanglong.quanlythuedat.infrastructure.repository.entity.HoSoEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
 import com.thanglong.quanlythuedat.usecase.IQuanLyHoSoUseCase;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoOutputDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/hoso")
+@CrossOrigin(origins = "*")
 public class HoSoController {
 
     @Autowired
     private IQuanLyHoSoUseCase quanLyHoSoUseCase;
 
-    // ---------------------------------------------------------
-    // API 1: POST /api/hoso/nop-to-khai
-    // Chức năng: Chủ đất nộp tờ khai thuế
-    // ---------------------------------------------------------
     @PostMapping("/nop-to-khai")
     public ResponseEntity<HoSoOutputDTO> nopHoSo(@RequestBody HoSoInputDTO input) {
-        HoSoOutputDTO result = quanLyHoSoUseCase.nopHoSoKhaiThue(input);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(quanLyHoSoUseCase.nopHoSoKhaiThue(input));
     }
 
-    // ---------------------------------------------------------
-    // API 2: GET /api/hoso/danh-sach
-    // Chức năng: Cán bộ thuế xem danh sách tất cả hồ sơ (để duyệt)
-    // ---------------------------------------------------------
     @GetMapping("/danh-sach")
-    public ResponseEntity<?> xemDanhSach() {
-        // Trả về danh sách JSON các hồ sơ có trong Database
+    public ResponseEntity<List<HoSoEntity>> xemDanhSach() {
         return ResponseEntity.ok(quanLyHoSoUseCase.layDanhSachHoSo());
     }
 
-    // ---------------------------------------------------------
-    // API 3: POST /api/hoso/duyet
-    // Chức năng: Cán bộ thuế Duyệt hoặc Từ chối hồ sơ
-    // Tham số gửi lên: ?id=...&dongY=...&lyDo=...
-    // ---------------------------------------------------------
+    // [MỚI] Xem chi tiết hồ sơ (Screenshot 6)
+    @GetMapping("/{id}")
+    public ResponseEntity<?> xemChiTiet(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(quanLyHoSoUseCase.layChiTietHoSo(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/duyet")
     public ResponseEntity<String> duyetHoSo(
-            @RequestParam Long id,           // Mã hồ sơ cần duyệt
-            @RequestParam boolean dongY,     // true = Duyệt, false = Từ chối
-            @RequestParam(required = false) String lyDo // Lý do (không bắt buộc)
-    ) {
-        
-        String ketQua = quanLyHoSoUseCase.duyetHoSo(id, dongY, lyDo);
-        return ResponseEntity.ok(ketQua);
+            @RequestParam Long id,
+            @RequestParam boolean dongY,
+            @RequestParam(required = false) String lyDo) {
+        return ResponseEntity.ok(quanLyHoSoUseCase.duyetHoSo(id, dongY, lyDo));
     }
+
+    // [MỚI] Thanh toán thuế (Screenshot 2)
+    @PostMapping("/{id}/thanh-toan")
+    public ResponseEntity<?> thanhToan(@PathVariable Long id) {
+        try {
+            quanLyHoSoUseCase.thanhToanThue(id);
+            return ResponseEntity.ok(Map.of("message", "Thanh toán thành công! Hồ sơ đã hoàn tất."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // [MỚI] Xuất Excel (Screenshot 6 - Xuất dữ liệu hồ sơ)
+    @GetMapping("/xuat-excel")
+    public ResponseEntity<InputStreamResource> xuatExcel() {
+        ByteArrayInputStream in = quanLyHoSoUseCase.xuatBaoCaoExcel();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=danh_sach_hoso.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(in));
+    }
+
     @PostMapping("/khieu-nai")
     public ResponseEntity<?> guiKhieuNai(@RequestBody KhieuNaiEntity khieuNai) {
-        // Gọi hàm guiKhieuNai trong UseCase (Bạn nhớ thêm hàm này vào Interface IQuanLyHoSoUseCase nhé)
-        return ResponseEntity.ok("Đã gửi khiếu nại thành công");
+        return ResponseEntity.ok(quanLyHoSoUseCase.guiKhieuNai(khieuNai.getMaHoSo(), khieuNai.getMaNguoiGui(), khieuNai.getNoiDung()));
     }
 }

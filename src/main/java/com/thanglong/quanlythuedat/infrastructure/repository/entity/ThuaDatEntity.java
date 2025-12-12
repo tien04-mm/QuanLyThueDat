@@ -11,14 +11,22 @@ public class ThuaDatEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Thông tin pháp lý sổ đỏ
+    @Column(nullable = false)
     private String soTo;
+
+    @Column(nullable = false)
     private String soThua;
+
     private String diaChi;
-    private String khuVuc; // Để tra bảng giá (VD: Huyen A)
     
-    private Double dienTichGoc; // "Sự thật" để chống gian lận
-    private String maLoaiDat;   // Quy hoạch là đất gì (ODT, CLN...)
+    @Column(nullable = false)
+    private String khuVuc; // Quan trọng để tính giá đất
     
-    private Long maChuSoHuu;    // ID của NguoiDung
+    @Column(nullable = false)
+    private Double dienTichGoc; 
+
+    @Column(nullable = false)
+    private String maLoaiDat; // ODT, CLN...
+    
+    private Long maChuSoHuu;  // Có thể null nếu đất công hoặc chưa cấp sổ
 }
