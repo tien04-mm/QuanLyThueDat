@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface JpaHoSoRepo extends JpaRepository<HoSoEntity, Long> {
-    // Có thể thêm các hàm findByMaNguoiKhai... nếu cần query tay
-    // Hiện tại dùng findAll().stream().filter() trong UseCase vẫn ổn với dữ liệu nhỏ
+    // Các hàm find mặc định của JPA đã đủ dùng
 }

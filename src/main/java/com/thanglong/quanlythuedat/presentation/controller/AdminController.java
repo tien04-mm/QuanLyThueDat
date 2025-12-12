@@ -4,8 +4,8 @@ import com.thanglong.quanlythuedat.infrastructure.repository.entity.BangGiaDatEn
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.NguoiDungEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.ThuaDatEntity;
 import com.thanglong.quanlythuedat.usecase.IAdminUseCase;
+import com.thanglong.quanlythuedat.usecase.IQuanLyHoSoUseCase;
 import com.thanglong.quanlythuedat.usecase.IThuaDatUseCase;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +22,17 @@ public class AdminController {
     @Autowired
     private IAdminUseCase adminUseCase;
 
-    // --- QUẢN LÝ ĐẤT ĐAI ---
+    @Autowired
+    private IThuaDatUseCase thuaDatUseCase;
 
+    @Autowired
+    private IQuanLyHoSoUseCase quanLyHoSoUseCase; // Inject thêm để lấy số liệu báo cáo
+
+    // ========================================================================
+    // 1. NHÓM CHỨC NĂNG QUẢN LÝ ĐẤT ĐAI & BẢNG GIÁ
+    // ========================================================================
+
+    // Cập nhật bảng giá đất (để tính thuế)
     @PostMapping("/banggia")
     public ResponseEntity<?> capNhatGiaDat(@RequestBody BangGiaDatEntity bangGia) {
         try {
@@ -33,6 +42,7 @@ public class AdminController {
         }
     }
 
+    // Import dữ liệu đất đai từ file Excel (Master Data)
     @PostMapping(value = "/import-dat-dai", consumes = {"multipart/form-data"})
     public ResponseEntity<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {
@@ -42,7 +52,18 @@ public class AdminController {
             return ResponseEntity.badRequest().body("Lỗi Import: " + e.getMessage());
         }
     }
-    
+
+    // Cập nhật thông tin thửa đất thủ công (Sửa sai sót)
+    @PutMapping("/thua-dat/{id}")
+    public ResponseEntity<?> capNhatThuaDat(@PathVariable Long id, @RequestBody ThuaDatEntity datMoi) {
+        try {
+            return ResponseEntity.ok(thuaDatUseCase.capNhatThongTinDat(id, datMoi));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Xóa thửa đất
     @DeleteMapping("/thua-dat/{id}")
     public ResponseEntity<String> xoaThuaDat(@PathVariable Long id) {
         try {
@@ -53,9 +74,11 @@ public class AdminController {
         }
     }
 
-    // --- QUẢN LÝ NGƯỜI DÙNG (ADMIN & USER) ---
+    // ========================================================================
+    // 2. NHÓM CHỨC NĂNG QUẢN LÝ NGƯỜI DÙNG (ADMIN & USER)
+    // ========================================================================
 
-    // API Tạo nhân viên (Admin -> Cán bộ / QL Đất đai)
+    // Tạo tài khoản nội bộ (Cán bộ thuế / Quản lý đất đai)
     @PostMapping("/tao-nhan-vien")
     public ResponseEntity<?> taoNhanVien(@RequestBody NguoiDungEntity nhanVien) {
         try {
@@ -65,27 +88,7 @@ public class AdminController {
         }
     }
 
-    // [BỔ SUNG] API Xem danh sách & Tìm kiếm (Screenshot 1, 4, 8)
-    // Hỗ trợ lọc theo vai trò (ví dụ: ?vaiTro=CHU_DAT) hoặc từ khóa tên
-    @GetMapping("/nguoi-dung")
-    public ResponseEntity<List<NguoiDungEntity>> layDanhSachNguoiDung(
-            @RequestParam(required = false) String vaiTro,
-            @RequestParam(required = false) String keyword) {
-        return ResponseEntity.ok(adminUseCase.timKiemNguoiDung(vaiTro, keyword));
-    }
-
-    // [BỔ SUNG] API Cập nhật thông tin người dùng (Screenshot 1, 8)
-    @PutMapping("/nguoi-dung/{id}")
-    public ResponseEntity<?> capNhatThongTin(@PathVariable Long id, @RequestBody NguoiDungEntity dataMoi) {
-        try {
-            return ResponseEntity.ok(adminUseCase.capNhatThongTin(id, dataMoi));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    // [BỔ SUNG] API Phê duyệt đăng ký (Screenshot 8)
-    // Admin duyệt tài khoản Chủ đất mới đăng ký (chuyển hoatDong = true)
+    // Phê duyệt tài khoản người dân mới đăng ký
     @PutMapping("/nguoi-dung/{id}/phe-duyet")
     public ResponseEntity<?> pheDuyetTaiKhoan(@PathVariable Long id) {
         try {
@@ -96,6 +99,25 @@ public class AdminController {
         }
     }
 
+    // Tìm kiếm và xem danh sách người dùng (Lọc theo vai trò/tên)
+    @GetMapping("/nguoi-dung")
+    public ResponseEntity<List<NguoiDungEntity>> layDanhSachNguoiDung(
+            @RequestParam(required = false) String vaiTro,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(adminUseCase.timKiemNguoiDung(vaiTro, keyword));
+    }
+
+    // Cập nhật thông tin người dùng (SĐT, Email, Địa chỉ)
+    @PutMapping("/nguoi-dung/{id}")
+    public ResponseEntity<?> capNhatThongTin(@PathVariable Long id, @RequestBody NguoiDungEntity dataMoi) {
+        try {
+            return ResponseEntity.ok(adminUseCase.capNhatThongTin(id, dataMoi));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Khóa tài khoản (Khi vi phạm)
     @PutMapping("/nguoi-dung/{id}/khoa")
     public ResponseEntity<String> khoaTaiKhoan(@PathVariable Long id) {
         try {
@@ -106,6 +128,7 @@ public class AdminController {
         }
     }
 
+    // Xóa người dùng vĩnh viễn
     @DeleteMapping("/nguoi-dung/{id}")
     public ResponseEntity<String> xoaNguoiDung(@PathVariable Long id) {
         try {
@@ -115,15 +138,22 @@ public class AdminController {
             return ResponseEntity.badRequest().body("Lỗi xóa: " + e.getMessage());
         }
     }
-    @Autowired
-    private IThuaDatUseCase thuaDatUseCase; // Inject thêm cái này vào AdminController
 
-    @PutMapping("/thua-dat/{id}")
-    public ResponseEntity<?> capNhatThuaDat(@PathVariable Long id, @RequestBody ThuaDatEntity datMoi) {
+    // ========================================================================
+    // 3. NHÓM CHỨC NĂNG BÁO CÁO - THỐNG KÊ (MỚI)
+    // ========================================================================
+
+    // Xem báo cáo thống kê chi tiết (Tổng thu, Nợ thuế, Số lượng hồ sơ...)
+    // Hỗ trợ lọc theo Năm và Khu vực
+    @GetMapping("/thong-ke")
+    public ResponseEntity<?> xemBaoCaoThongKe(
+            @RequestParam(required = false) Integer nam,
+            @RequestParam(required = false) String khuVuc) {
         try {
-            return ResponseEntity.ok(thuaDatUseCase.capNhatThongTinDat(id, datMoi));
+            // Gọi sang UseCase Hồ sơ để lấy số liệu thực tế
+            return ResponseEntity.ok(quanLyHoSoUseCase.layBaoCaoThongKe(nam, khuVuc));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }

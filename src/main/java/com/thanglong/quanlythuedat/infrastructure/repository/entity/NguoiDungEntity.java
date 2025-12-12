@@ -21,7 +21,10 @@ public class NguoiDungEntity {
     private String hoTen;
     
     @Column(unique = true, nullable = false)
-    private String cccd; // Căn cước công dân (Bắt buộc)
+    private String cccd; // Căn cước công dân
+    
+    // [MỚI] Lưu tên file ảnh CCCD/Giấy tờ xác thực
+    private String anhGiayTo; 
     
     @Column(nullable = false)
     private String vaiTro; // ADMIN, CAN_BO, CHU_DAT
@@ -31,5 +34,5 @@ public class NguoiDungEntity {
     private String email;
 
     @Column(columnDefinition = "boolean default true")
-    private Boolean hoatDong = true; // Mặc định là True
+    private Boolean hoatDong = true;
 }

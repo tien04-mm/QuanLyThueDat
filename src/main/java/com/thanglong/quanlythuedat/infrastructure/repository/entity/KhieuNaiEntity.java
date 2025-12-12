@@ -12,19 +12,19 @@ public class KhieuNaiEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long maHoSo;
-
-    @Column(nullable = false)
-    private Long maNguoiGui;
+    @Column(nullable = false) private Long maHoSo;
+    @Column(nullable = false) private Long maNguoiGui;
     
     @Column(length = 2000, nullable = false)
     private String noiDung;
     
-    private LocalDateTime ngayGui = LocalDateTime.now(); // Mặc định lấy giờ hiện tại
+    // [MỚI] Lưu tên file/ảnh minh chứng khiếu nại
+    private String fileMinhChung;
+
+    private LocalDateTime ngayGui = LocalDateTime.now();
 
     @Column(nullable = false)
-    private String trangThai = "CHO_XU_LY"; // Mặc định
+    private String trangThai = "CHO_XU_LY"; 
 
     private String phanHoiCuaCanBo;
 }

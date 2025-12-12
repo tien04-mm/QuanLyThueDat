@@ -5,40 +5,38 @@ import com.thanglong.quanlythuedat.infrastructure.repository.jpa.JpaNguoiDungRep
 import com.thanglong.quanlythuedat.usecase.dto.LoginDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AuthUseCase {
 
-    @Autowired
-    private JpaNguoiDungRepo nguoiDungRepo;
+    @Autowired private JpaNguoiDungRepo nguoiDungRepo;
 
     public NguoiDungEntity dangNhap(LoginDTO loginRequest) {
         NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
-                .orElseThrow(() -> new RuntimeException("Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu!"));
-        
-        // [MỚI] Kiểm tra trạng thái Khóa (Theo Activity Diagram)
+                .orElseThrow(() -> new RuntimeException("Sai tài khoản hoặc mật khẩu!"));
         if (Boolean.FALSE.equals(user.getHoatDong())) {
-            throw new RuntimeException("Tài khoản này đã bị KHÓA do vi phạm quy định!");
+            throw new RuntimeException("Tài khoản chưa được duyệt hoặc bị khóa!");
         }
-
         return user;
     }
 
-    public NguoiDungEntity dangKy(NguoiDungEntity nguoiMoi) {
-        // Check 1: Trùng tên đăng nhập
-        if (nguoiDungRepo.existsByTenDangNhap(nguoiMoi.getTenDangNhap())) {
+    // [CẬP NHẬT] Đăng ký nhận file ảnh
+    public NguoiDungEntity dangKy(NguoiDungEntity nguoiMoi, MultipartFile file) {
+        if (nguoiDungRepo.existsByTenDangNhap(nguoiMoi.getTenDangNhap())) 
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
-        }
-        
-        // [MỚI] Check 2: Trùng CCCD (Theo Activity Diagram)
-        if (nguoiDungRepo.existsByCccd(nguoiMoi.getCccd())) {
-            throw new RuntimeException("Số CCCD này đã được đăng ký tài khoản!");
+        if (nguoiDungRepo.existsByCccd(nguoiMoi.getCccd())) 
+            throw new RuntimeException("CCCD đã tồn tại!");
+
+        // Lưu file ảnh giấy tờ (Logic đơn giản: Lưu tên file)
+        if (file != null && !file.isEmpty()) {
+            String fileName = "giayto_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            // TODO: Nếu muốn lưu thật thì dùng FileOutputStream để ghi ra ổ cứng
+            nguoiMoi.setAnhGiayTo(fileName);
         }
 
-        // Thiết lập mặc định
         nguoiMoi.setVaiTro("CHU_DAT");
-        nguoiMoi.setHoatDong(true); // Mặc định là Hoạt động
-        
+        nguoiMoi.setHoatDong(false); // Đăng ký xong phải chờ Admin duyệt
         return nguoiDungRepo.save(nguoiMoi);
     }
 }

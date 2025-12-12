@@ -5,23 +5,20 @@ import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEnti
 import com.thanglong.quanlythuedat.usecase.dto.BaoCaoThongKeDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoOutputDTO;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
 public interface IQuanLyHoSoUseCase {
-    // Nghiệp vụ chính
-    HoSoOutputDTO nopHoSoKhaiThue(HoSoInputDTO input);
+    HoSoOutputDTO nopHoSoKhaiThue(HoSoInputDTO input, MultipartFile file);
+    KhieuNaiEntity guiKhieuNai(KhieuNaiEntity data, MultipartFile file);
+    String layLichSuXuLy(Long maHoSo);
+    BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc);
+    
     List<HoSoEntity> layDanhSachHoSo();
-    HoSoEntity layChiTietHoSo(Long id); // [MỚI] Xem chi tiết
+    HoSoEntity layChiTietHoSo(Long id);
     String duyetHoSo(Long maHoSo, boolean dongY, String lyDo);
+    void thanhToanThue(Long maHoSo);
+    ByteArrayInputStream xuatBaoCaoExcel();
     List<HoSoEntity> layLichSuNopThue(Long maNguoiDung);
-
-    // [MỚI] Thanh toán & Xuất file (Diagram 2 & 6)
-    void thanhToanThue(Long maHoSo); 
-    ByteArrayInputStream xuatBaoCaoExcel(); // Xuất file Excel
-
-    // Thống kê & Khiếu nại
-    BaoCaoThongKeDTO layBaoCaoThongKe();
-    KhieuNaiEntity guiKhieuNai(Long maHoSo, Long maNguoiGui, String noiDung);
 }
