@@ -2,7 +2,7 @@ package com.thanglong.quanlythuedat.usecase;
 
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.HoSoEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
-import com.thanglong.quanlythuedat.infrastructure.repository.entity.NhatKyXuLyEntity;
+import com.thanglong.quanlythuedat.infrastructure.repository.entity.NhatKyXuLyEntity; // Import quan trọng
 import com.thanglong.quanlythuedat.usecase.dto.BaoCaoThongKeDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoOutputDTO;
@@ -23,10 +23,10 @@ public interface IQuanLyHoSoUseCase {
     List<HoSoEntity> layDanhSachHoSo();
     List<HoSoEntity> layLichSuNopThue(Long maNguoiDung);
     
-    // [QUAN TRỌNG] Hàm xem lịch sử xử lý (Trả về List Entity)
     List<NhatKyXuLyEntity> xemLichSuXuLy(Long maHoSo);
 
-    // Báo cáo thống kê
+    // Báo cáo thống kê & Xuất Excel
     BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc);
+    
     ByteArrayInputStream xuatBaoCaoExcel();
 }

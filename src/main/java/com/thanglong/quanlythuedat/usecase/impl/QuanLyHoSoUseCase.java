@@ -24,8 +24,6 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
     @Autowired private JpaBangGiaDatRepo bangGiaDatRepo;
     @Autowired private JpaLoaiDatRepo loaiDatRepo;
     @Autowired private JpaKhieuNaiRepo khieuNaiRepo;
-    
-    // [QUAN TRỌNG] Các Repo mới
     @Autowired private JpaNhatKyXuLyRepo nhatKyRepo; 
     @Autowired private JpaKhuVucRepo khuVucRepo;     
 
@@ -34,7 +32,6 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         ThuaDatEntity thuaDat = thuaDatRepo.findById(input.getMaThuaDat())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thửa đất!"));
 
-        // 1. Chống gian lận
         boolean gianLan = false;
         StringBuilder msg = new StringBuilder();
         if (input.getDienTichKhaiBao() < thuaDat.getDienTichGoc() * 0.98) {
@@ -46,7 +43,6 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
             msg.append("Sai mục đích sử dụng quy hoạch. ");
         }
 
-        // 2. Tính thuế (Dùng hệ số K từ bảng Khu Vực)
         BangGiaDatEntity bangGia = bangGiaDatRepo.findByNamApDungAndMaKhuVucAndMaLoaiDat(
                 input.getNamKhaiThue(), thuaDat.getMaKhuVuc(), thuaDat.getMaLoaiDat()
         ).orElseThrow(() -> new RuntimeException("Chưa có bảng giá phù hợp!"));
@@ -59,14 +55,12 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         double tongGiaTri = input.getDienTichKhaiBao() * bangGia.getDonGiaM2() * khuVuc.getHeSoK();
         double thuePhaiNop = tongGiaTri * loaiDat.getThueSuat();
 
-        // 3. Lưu hồ sơ
         HoSoEntity hoSo = new HoSoEntity();
         hoSo.setMaNguoiKhai(input.getMaNguoiDung());
         hoSo.setMaThuaDat(input.getMaThuaDat());
         hoSo.setNamKhaiThue(input.getNamKhaiThue());
         hoSo.setDienTichKhaiBao(input.getDienTichKhaiBao());
         hoSo.setMucDichSuDungKhaiBao(input.getMucDichSuDungKhaiBao());
-        
         hoSo.setTongGiaTriDat(tongGiaTri);
         hoSo.setSoTienPhaiNop(thuePhaiNop);
         hoSo.setDauHieuGianLan(gianLan);
@@ -79,8 +73,6 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         }
         
         hoSo = hoSoRepo.save(hoSo);
-
-        // 4. Ghi nhật ký
         ghiNhatKy(hoSo.getMaHoSo(), null, "KHOI_TAO", trangThaiBanDau, "Nộp hồ sơ. " + msg);
 
         HoSoOutputDTO out = new HoSoOutputDTO();
@@ -98,11 +90,9 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         HoSoEntity h = layChiTietHoSo(maHoSo);
         String ttCu = h.getTrangThai();
         String ttMoi = dongY ? "DA_DUYET" : "TU_CHOI";
-        
         h.setTrangThai(ttMoi);
         h.setNgayDuyet(LocalDateTime.now());
         hoSoRepo.save(h);
-
         ghiNhatKy(maHoSo, 999L, ttCu, ttMoi, lyDo);
         return "Đã cập nhật trạng thái: " + ttMoi;
     }
@@ -111,11 +101,9 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
     public void thanhToanThue(Long maHoSo) {
         HoSoEntity h = layChiTietHoSo(maHoSo);
         if (!"DA_DUYET".equals(h.getTrangThai())) throw new RuntimeException("Hồ sơ chưa được duyệt!");
-        
         String ttCu = h.getTrangThai();
         h.setTrangThai("DA_NOP_TIEN");
         hoSoRepo.save(h);
-        
         ghiNhatKy(maHoSo, h.getMaNguoiKhai(), ttCu, "DA_NOP_TIEN", "Thanh toán thành công");
     }
 
@@ -130,6 +118,7 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         nhatKyRepo.save(nk);
     }
 
+    // [FIX LỖI] Hàm này sẽ hết báo đỏ vì Interface đã có khai báo
     @Override
     public List<NhatKyXuLyEntity> xemLichSuXuLy(Long maHoSo) {
         return nhatKyRepo.findByMaHoSo(maHoSo);
@@ -141,7 +130,6 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         if (nam != null) {
             list = list.stream().filter(h -> h.getNamKhaiThue().equals(nam)).collect(Collectors.toList());
         }
-        
         BaoCaoThongKeDTO dto = new BaoCaoThongKeDTO();
         dto.setTongSoHoSo(list.size());
         dto.setTongThuThue(list.stream().filter(h -> "DA_NOP_TIEN".equals(h.getTrangThai())).mapToDouble(h -> h.getSoTienPhaiNop() != null ? h.getSoTienPhaiNop() : 0).sum());
@@ -152,9 +140,33 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         return dto;
     }
 
+    // [FIX LỖI] Hàm xuất Excel cho Controller gọi
+    @Override
+    public ByteArrayInputStream xuatBaoCaoExcel() {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Bao Cao Thue");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Mã Hồ Sơ");
+            header.createCell(1).setCellValue("Diện Tích");
+            header.createCell(2).setCellValue("Tiền Thuế");
+            header.createCell(3).setCellValue("Trạng Thái");
+
+            List<HoSoEntity> list = hoSoRepo.findAll();
+            int idx = 1;
+            for (HoSoEntity h : list) {
+                Row row = sheet.createRow(idx++);
+                row.createCell(0).setCellValue(h.getMaHoSo());
+                row.createCell(1).setCellValue(h.getDienTichKhaiBao());
+                row.createCell(2).setCellValue(h.getSoTienPhaiNop() != null ? h.getSoTienPhaiNop() : 0);
+                row.createCell(3).setCellValue(h.getTrangThai());
+            }
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (Exception e) { return null; }
+    }
+
     @Override public HoSoEntity layChiTietHoSo(Long id) { return hoSoRepo.findById(id).orElseThrow(() -> new RuntimeException("Not found")); }
     @Override public List<HoSoEntity> layDanhSachHoSo() { return hoSoRepo.findAll(); }
     @Override public List<HoSoEntity> layLichSuNopThue(Long id) { return hoSoRepo.findAll(); } 
-    @Override public ByteArrayInputStream xuatBaoCaoExcel() { return null; } 
     @Override public KhieuNaiEntity guiKhieuNai(KhieuNaiEntity k, MultipartFile f) { return khieuNaiRepo.save(k); }
 }
