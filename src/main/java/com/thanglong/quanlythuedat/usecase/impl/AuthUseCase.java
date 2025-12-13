@@ -16,9 +16,13 @@ public class AuthUseCase {
         NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
                 .orElseThrow(() -> new RuntimeException("Sai tài khoản hoặc mật khẩu!"));
         
-        // Kiểm tra trạng thái (True = Active)
+        // [DEBUG] In ra xem nó đang là true hay false hay null
+        System.out.println("User: " + user.getTenDangNhap());
+        System.out.println("Trạng thái (trangThai): " + user.getTrangThai());
+
+        // Kiểm tra trạng thái
         if (Boolean.FALSE.equals(user.getTrangThai())) {
-            throw new RuntimeException("Tài khoản chưa được kích hoạt hoặc bị khóa!");
+            throw new RuntimeException("Tài khoản đang bị khóa (trangThai = false/null)!");
         }
         return user;
     }

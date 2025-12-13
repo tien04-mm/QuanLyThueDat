@@ -9,27 +9,43 @@ import java.time.LocalDateTime;
 @Data
 public class NguoiDungEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long maNguoiDung; // Đổi id thành maNguoiDung cho khớp UML
+    private Long id; // Trong SQL là id, giữ nguyên
 
-    @Column(unique = true, nullable = false) private String tenDangNhap;
-    @Column(nullable = false) private String matKhau;
+    @Column(unique = true, nullable = false, name = "ten_dang_nhap") 
+    private String tenDangNhap;
+
+    @Column(nullable = false, name = "mat_khau") 
+    private String matKhau;
+    
+    @Column(name = "ho_ten")
     private String hoTen;
 
-    @Column(unique = true, nullable = false)
-    private String soDinhDanh; // Thay cho cccd cũ, map với VNeID
+    // [FIX] Map biến 'soDinhDanh' vào cột 'cccd' trong SQL
+    @Column(unique = true, nullable = false, name = "cccd")
+    private String soDinhDanh; 
 
-    private Integer loaiDoiTuong; // 1=VN, 2=NN, 3=ToChuc
+    @Column(name = "loai_doi_tuong")
+    private Integer loaiDoiTuong; 
+    
+    @Column(name = "quoc_tich")
     private String quocTich = "Vietnam"; 
 
-    private String vaiTro; // ADMIN, CAN_BO, CHU_DAT (Thay cho bảng VaiTro để đơn giản hóa)
+    @Column(name = "vai_tro")
+    private String vaiTro; 
     
+    @Column(name = "dia_chi")
     private String diaChi;
+    
     private String sdt;
     private String email;
+    
+    @Column(name = "ngay_tao")
     private LocalDateTime ngayTao = LocalDateTime.now();
     
-    private String anhGiayTo; // Giữ lại từ version trước
+    @Column(name = "anh_giay_to")
+    private String anhGiayTo; 
     
-    @Column(columnDefinition = "boolean default true")
-    private Boolean trangThai = true; // Đổi hoatDong thành trangThai cho khớp UML
+    // [FIX QUAN TRỌNG] Map biến 'trangThai' vào cột 'hoat_dong' trong SQL
+    @Column(name = "hoat_dong", columnDefinition = "tinyint(1) default 1")
+    private Boolean trangThai = true; 
 }
