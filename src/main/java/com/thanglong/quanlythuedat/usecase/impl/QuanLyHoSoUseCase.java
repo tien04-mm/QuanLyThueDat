@@ -25,7 +25,7 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
     @Autowired private JpaLoaiDatRepo loaiDatRepo;
     @Autowired private JpaKhieuNaiRepo khieuNaiRepo;
     
-    // [QUAN TRỌNG] Các Repo mới đã được tạo ở Bước 1
+    // [QUAN TRỌNG] Các Repo mới
     @Autowired private JpaNhatKyXuLyRepo nhatKyRepo; 
     @Autowired private JpaKhuVucRepo khuVucRepo;     
 

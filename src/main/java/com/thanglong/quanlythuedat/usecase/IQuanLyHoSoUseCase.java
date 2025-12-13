@@ -2,23 +2,31 @@ package com.thanglong.quanlythuedat.usecase;
 
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.HoSoEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
+import com.thanglong.quanlythuedat.infrastructure.repository.entity.NhatKyXuLyEntity;
 import com.thanglong.quanlythuedat.usecase.dto.BaoCaoThongKeDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoOutputDTO;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
 public interface IQuanLyHoSoUseCase {
+    // Nghiệp vụ chính
     HoSoOutputDTO nopHoSoKhaiThue(HoSoInputDTO input, MultipartFile file);
-    KhieuNaiEntity guiKhieuNai(KhieuNaiEntity data, MultipartFile file);
-    String layLichSuXuLy(Long maHoSo);
-    BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc);
-    
-    List<HoSoEntity> layDanhSachHoSo();
-    HoSoEntity layChiTietHoSo(Long id);
     String duyetHoSo(Long maHoSo, boolean dongY, String lyDo);
     void thanhToanThue(Long maHoSo);
-    ByteArrayInputStream xuatBaoCaoExcel();
+    KhieuNaiEntity guiKhieuNai(KhieuNaiEntity data, MultipartFile file);
+
+    // Tra cứu & Lịch sử
+    HoSoEntity layChiTietHoSo(Long maHoSo);
+    List<HoSoEntity> layDanhSachHoSo();
     List<HoSoEntity> layLichSuNopThue(Long maNguoiDung);
+    
+    // [QUAN TRỌNG] Hàm xem lịch sử xử lý (Trả về List Entity)
+    List<NhatKyXuLyEntity> xemLichSuXuLy(Long maHoSo);
+
+    // Báo cáo thống kê
+    BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc);
+    ByteArrayInputStream xuatBaoCaoExcel();
 }
