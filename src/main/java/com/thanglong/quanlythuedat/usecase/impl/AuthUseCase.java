@@ -1,5 +1,4 @@
 package com.thanglong.quanlythuedat.usecase.impl;
-
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.NguoiDungEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.jpa.JpaNguoiDungRepo;
 import com.thanglong.quanlythuedat.usecase.dto.LoginDTO;
@@ -9,38 +8,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AuthUseCase {
-
     @Autowired private JpaNguoiDungRepo nguoiDungRepo;
 
-    public NguoiDungEntity dangNhap(LoginDTO loginRequest) {
-        NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(loginRequest.getUsername(), loginRequest.getPassword())
-                .orElseThrow(() -> new RuntimeException("Sai tài khoản hoặc mật khẩu!"));
-        
-        // [DEBUG] In ra xem nó đang là true hay false hay null
-        System.out.println("User: " + user.getTenDangNhap());
-        System.out.println("Trạng thái (trangThai): " + user.getTrangThai());
-
-        // Kiểm tra trạng thái
-        if (Boolean.FALSE.equals(user.getTrangThai())) {
-            throw new RuntimeException("Tài khoản đang bị khóa (trangThai = false/null)!");
-        }
+    public NguoiDungEntity dangNhap(LoginDTO req) {
+        NguoiDungEntity user = nguoiDungRepo.findByTenDangNhapAndMatKhau(req.getUsername(), req.getPassword())
+                .orElseThrow(() -> new RuntimeException("Sai thông tin!"));
+        if (Boolean.FALSE.equals(user.getTrangThai())) throw new RuntimeException("Bị khóa!");
         return user;
     }
 
-    public NguoiDungEntity dangKy(NguoiDungEntity nguoiMoi, MultipartFile file) {
-        if (nguoiDungRepo.existsByTenDangNhap(nguoiMoi.getTenDangNhap())) 
-            throw new RuntimeException("Tên đăng nhập đã tồn tại!");
+    public NguoiDungEntity dangKy(NguoiDungEntity user, MultipartFile file) {
+        if(nguoiDungRepo.existsByTenDangNhap(user.getTenDangNhap())) throw new RuntimeException("Trùng user");
+        if(nguoiDungRepo.existsBySoDinhDanh(user.getSoDinhDanh())) throw new RuntimeException("Trùng CCCD");
         
-        // Sửa: Kiểm tra trùng số định danh (thay vì cccd)
-        if (nguoiDungRepo.existsBySoDinhDanh(nguoiMoi.getSoDinhDanh())) 
-            throw new RuntimeException("Số định danh (CCCD) đã tồn tại!");
-
-        if (file != null && !file.isEmpty()) {
-            nguoiMoi.setAnhGiayTo("giayto_" + System.currentTimeMillis() + "_" + file.getOriginalFilename());
-        }
-
-        nguoiMoi.setVaiTro("CHU_DAT");
-        nguoiMoi.setTrangThai(false); // Chờ duyệt
-        return nguoiDungRepo.save(nguoiMoi);
+        user.setMaVaiTro(4); // 4 = Chủ Đất (theo SQL bạn nhập)
+        user.setTrangThai(false);
+        return nguoiDungRepo.save(user);
     }
 }

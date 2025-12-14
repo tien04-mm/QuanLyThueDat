@@ -3,19 +3,16 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "KhuVuc")
+@Table(name = "VaiTro")
 @Data
-public class KhuVucEntity {
+public class VaiTroEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "maKhuVuc")
-    private Integer maKhuVuc;
+    @Column(name = "maVaiTro")
+    private Integer maVaiTro;
 
-    @Column(name = "tenKhuVuc")
-    private String tenKhuVuc;
+    @Column(name = "tenVaiTro")
+    private String tenVaiTro;
 
     @Column(name = "moTa")
     private String moTa;
-
-    @Column(name = "heSoK")
-    private Float heSoK;
 }

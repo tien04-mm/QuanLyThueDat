@@ -29,25 +29,22 @@ public class AdminUseCase implements IAdminUseCase {
 
     @Override
     public NguoiDungEntity taoTaiKhoanNhanVien(NguoiDungEntity nvMoi) {
-        // Kiểm tra trùng tên đăng nhập
         if (nguoiDungRepo.existsByTenDangNhap(nvMoi.getTenDangNhap())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
-        // Kiểm tra trùng Số định danh (Logic mới)
+        
+        // [FIX] Kiểm tra trùng Số định danh (method đã thêm ở bước trước)
         if (nvMoi.getSoDinhDanh() != null && nguoiDungRepo.existsBySoDinhDanh(nvMoi.getSoDinhDanh())) {
             throw new RuntimeException("Số định danh (CCCD) đã tồn tại!");
         }
 
-        // Mặc định vai trò
-        String role = nvMoi.getVaiTro();
-        if (role == null || role.isEmpty()) {
+        // Mặc định vai trò nếu chưa có (setVaiTro sẽ tự map sang số int: 2=CAN_BO)
+        if (nvMoi.getMaVaiTro() == null) {
             nvMoi.setVaiTro("CAN_BO");
         }
 
-        // Mặc định trạng thái (Admin tạo thì Active luôn)
         nvMoi.setTrangThai(true); 
         
-        // Mật khẩu mặc định
         if (nvMoi.getMatKhau() == null) {
             nvMoi.setMatKhau("123456");
         }
@@ -59,7 +56,7 @@ public class AdminUseCase implements IAdminUseCase {
     public void pheDuyetTaiKhoan(Long maNguoiDung) {
         NguoiDungEntity user = nguoiDungRepo.findById(maNguoiDung)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
-        user.setTrangThai(true); // Kích hoạt
+        user.setTrangThai(true);
         nguoiDungRepo.save(user);
     }
 
@@ -67,7 +64,7 @@ public class AdminUseCase implements IAdminUseCase {
     public void khoaTaiKhoan(Long maNguoiDung) {
         NguoiDungEntity user = nguoiDungRepo.findById(maNguoiDung)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
-        user.setTrangThai(false); // Khóa
+        user.setTrangThai(false);
         nguoiDungRepo.save(user);
     }
 
@@ -110,18 +107,22 @@ public class AdminUseCase implements IAdminUseCase {
 
     @Override
     public BangGiaDatEntity capNhatBangGiaDat(BangGiaDatEntity bangGiaMoi) {
-        // Tìm giá đất theo logic mới (Có maKhuVuc)
-        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByNamApDungAndMaKhuVucAndMaLoaiDat(
-                bangGiaMoi.getNamApDung(), 
-                bangGiaMoi.getMaKhuVuc(), // Dùng maKhuVuc
-                bangGiaMoi.getMaLoaiDat()
+        // [FIX] Sửa logic tìm kiếm: Dùng MaKhuVuc (Int), MaLoaiDat (Int) và TrangThai
+        // Bỏ logic tìm theo namApDung vì DB mới không có
+        Optional<BangGiaDatEntity> existing = bangGiaDatRepo.findByMaKhuVucAndMaLoaiDatAndTrangThai(
+                bangGiaMoi.getMaKhuVuc(), 
+                bangGiaMoi.getMaLoaiDat(),
+                "Hiệu lực"
         );
 
         if (existing.isPresent()) {
             BangGiaDatEntity cu = existing.get();
             cu.setDonGiaM2(bangGiaMoi.getDonGiaM2());
+            // Cập nhật ngày hiệu lực nếu cần
+            if (bangGiaMoi.getNgayBanHanh() != null) cu.setNgayBanHanh(bangGiaMoi.getNgayBanHanh());
             return bangGiaDatRepo.save(cu);
         } else {
+            if (bangGiaMoi.getTrangThai() == null) bangGiaMoi.setTrangThai("Hiệu lực");
             return bangGiaDatRepo.save(bangGiaMoi);
         }
     }
@@ -144,17 +145,22 @@ public class AdminUseCase implements IAdminUseCase {
                 if (row.getRowNum() == 0) continue; 
 
                 ThuaDatEntity dat = new ThuaDatEntity();
-                // Map cột Excel: 0=SoTo, 1=SoThua, 2=DiaChi, 3=MaKhuVuc, 4=DienTich, 5=MaLoaiDat
+                // Map cột Excel: 0=SoTo, 1=SoThua, 2=DiaChi, 3=MaKhuVuc(ID), 4=DienTich, 5=MaLoaiDat(ID)
                 dat.setSoTo(getCellValue(row, 0));
                 dat.setSoThua(getCellValue(row, 1));
-                dat.setDiaChiChiTiet(getCellValue(row, 2)); // Khớp Entity mới
-                dat.setMaKhuVuc(getCellValue(row, 3));      // Khớp Entity mới
+                dat.setDiaChiChiTiet(getCellValue(row, 2)); 
+                
+                // [FIX] Ép kiểu String từ Excel sang Integer vì DB lưu ID số
+                dat.setMaKhuVuc(parseInteger(getCellValue(row, 3)));
                 
                 Cell cellDT = row.getCell(4);
                 if (cellDT != null) dat.setDienTichGoc(cellDT.getNumericCellValue());
                 
-                dat.setMaLoaiDat(getCellValue(row, 5));
+                // [FIX] Ép kiểu String từ Excel sang Integer
+                dat.setMaLoaiDat(parseInteger(getCellValue(row, 5)));
+                
                 dat.setNgayTao(java.time.LocalDateTime.now());
+                dat.setTrangThai("Đang sử dụng");
 
                 danhSach.add(dat);
             }
@@ -168,6 +174,7 @@ public class AdminUseCase implements IAdminUseCase {
         }
     }
 
+    // Hàm đọc cell Excel sang String
     private String getCellValue(Row row, int index) {
         Cell cell = row.getCell(index);
         if (cell == null) return "";
@@ -176,5 +183,14 @@ public class AdminUseCase implements IAdminUseCase {
             case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
             default -> "";
         };
+    }
+    
+    // [THÊM MỚI] Hàm an toàn để ép kiểu String sang Integer
+    private Integer parseInteger(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null; // Hoặc ném lỗi nếu bắt buộc
+        }
     }
 }

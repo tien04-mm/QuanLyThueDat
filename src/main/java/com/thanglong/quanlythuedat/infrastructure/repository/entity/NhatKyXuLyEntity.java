@@ -1,25 +1,31 @@
 package com.thanglong.quanlythuedat.infrastructure.repository.entity;
-
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "nhat_ky_xu_ly")
+@Table(name = "NhatKyXuLy")
 @Data
 public class NhatKyXuLyEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "maNhatKy")
     private Long maNhatKy;
 
-    @Column(nullable = false)
+    @Column(name = "maHoSo")
     private Long maHoSo;
 
-    private Long maCanBo; // Người xử lý (có thể null nếu là hệ thống tự động)
+    @Column(name = "maCanBo")
+    private Long maCanBo;
 
+    @Column(name = "trangThaiTu")
     private String trangThaiTu;
+
+    @Column(name = "trangThaiDen")
     private String trangThaiDen;
+
+    @Column(name = "ghiChu")
     private String ghiChu;
-    
-    private LocalDateTime thoiGianXuLy = LocalDateTime.now();
+
+    @Column(name = "thoiGianXuLy")
+    private LocalDateTime thoiGianXuLy;
 }

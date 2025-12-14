@@ -1,24 +1,34 @@
 package com.thanglong.quanlythuedat.infrastructure.repository.entity;
-
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "bang_gia_dat")
+@Table(name = "BangGiaDat")
 @Data
 public class BangGiaDatEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long maBangGia;
+    @Column(name = "maBangGia")
+    private Integer maBangGia;
 
-    @Column(nullable = false) private String maLoaiDat;
-    @Column(nullable = false) private String maKhuVuc; // Link sang KhuVucEntity
+    @Column(name = "maKhuVuc")
+    private Integer maKhuVuc;
 
-    private Integer namApDung; // Vẫn giữ để biết hiệu lực
-    private LocalDateTime ngayBanHanh;
-    private LocalDateTime ngayHetHieuLuc;
-    
-    @Column(nullable = false) private Double donGiaM2;
+    @Column(name = "maLoaiDat")
+    private Integer maLoaiDat;
+
+    @Column(name = "donGiaM2")
+    private Double donGiaM2;
+
+    @Column(name = "ngayBanHanh")
+    private LocalDate ngayBanHanh;
+
+    @Column(name = "ngayHetHieuLuc")
+    private LocalDate ngayHetHieuLuc;
+
+    @Column(name = "soCongVanQuyDinh")
     private String soCongVanQuyDinh;
+
+    @Column(name = "trangThai")
     private String trangThai;
 }

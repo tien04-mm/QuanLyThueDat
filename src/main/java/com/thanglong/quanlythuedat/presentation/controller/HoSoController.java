@@ -2,7 +2,6 @@ package com.thanglong.quanlythuedat.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.HoSoEntity;
-import com.thanglong.quanlythuedat.infrastructure.repository.entity.KhieuNaiEntity;
 import com.thanglong.quanlythuedat.infrastructure.repository.entity.NhatKyXuLyEntity;
 import com.thanglong.quanlythuedat.usecase.IQuanLyHoSoUseCase;
 import com.thanglong.quanlythuedat.usecase.dto.HoSoInputDTO;
@@ -26,7 +25,7 @@ public class HoSoController {
     @Autowired
     private IQuanLyHoSoUseCase quanLyHoSoUseCase;
 
-    // [FIX] Thêm API này để FE gọi tải Excel
+    // Xuất Excel
     @GetMapping("/xuat-excel")
     public ResponseEntity<InputStreamResource> xuatExcel() {
         ByteArrayInputStream in = quanLyHoSoUseCase.xuatBaoCaoExcel();
@@ -38,7 +37,6 @@ public class HoSoController {
                 .body(new InputStreamResource(in));
     }
 
-    // Các API khác giữ nguyên
     @PostMapping(value = "/nop-to-khai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> nopHoSo(@RequestPart("data") String dataJson, @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
@@ -46,6 +44,7 @@ public class HoSoController {
             HoSoInputDTO input = mapper.readValue(dataJson, HoSoInputDTO.class);
             return ResponseEntity.ok(quanLyHoSoUseCase.nopHoSoKhaiThue(input, file));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -76,17 +75,6 @@ public class HoSoController {
             return ResponseEntity.ok(Map.of("message", "Thanh toán thành công!"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PostMapping(value = "/khieu-nai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> guiKhieuNai(@RequestPart("data") String dataJson, @RequestPart(value = "file", required = false) MultipartFile file) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            KhieuNaiEntity knData = mapper.readValue(dataJson, KhieuNaiEntity.class);
-            return ResponseEntity.ok(quanLyHoSoUseCase.guiKhieuNai(knData, file));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
