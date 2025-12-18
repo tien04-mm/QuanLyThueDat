@@ -25,7 +25,17 @@ public class HoSoController {
     @Autowired
     private IQuanLyHoSoUseCase quanLyHoSoUseCase;
 
-    // Xuất Excel
+    // 1. API THỐNG KÊ (Mới bổ sung)
+    @GetMapping("/thong-ke")
+    public ResponseEntity<?> xemBaoCaoThongKe(@RequestParam(required = false) Integer nam) {
+        try {
+            return ResponseEntity.ok(quanLyHoSoUseCase.layBaoCaoThongKe(nam, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 2. Xuất Excel
     @GetMapping("/xuat-excel")
     public ResponseEntity<InputStreamResource> xuatExcel() {
         ByteArrayInputStream in = quanLyHoSoUseCase.xuatBaoCaoExcel();
@@ -37,6 +47,7 @@ public class HoSoController {
                 .body(new InputStreamResource(in));
     }
 
+    // 3. Nộp hồ sơ
     @PostMapping(value = "/nop-to-khai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> nopHoSo(@RequestPart("data") String dataJson, @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
@@ -49,11 +60,13 @@ public class HoSoController {
         }
     }
 
+    // 4. Xem lịch sử xử lý
     @GetMapping("/{id}/lich-su-xu-ly")
     public ResponseEntity<List<NhatKyXuLyEntity>> xemLichSuXuLy(@PathVariable Long id) {
         return ResponseEntity.ok(quanLyHoSoUseCase.xemLichSuXuLy(id));
     }
 
+    // 5. Tra cứu chi tiết
     @GetMapping("/tra-cuu/{maHoSo}")
     public ResponseEntity<?> traCuuTrangThai(@PathVariable Long maHoSo) {
         try {
@@ -63,11 +76,13 @@ public class HoSoController {
         }
     }
 
+    // 6. Duyệt hồ sơ
     @PostMapping("/duyet")
     public ResponseEntity<String> duyetHoSo(@RequestParam Long id, @RequestParam boolean dongY, @RequestParam String lyDo) {
         return ResponseEntity.ok(quanLyHoSoUseCase.duyetHoSo(id, dongY, lyDo));
     }
 
+    // 7. Thanh toán
     @PostMapping("/{id}/thanh-toan")
     public ResponseEntity<?> thanhToan(@PathVariable Long id) {
         try {
@@ -78,6 +93,7 @@ public class HoSoController {
         }
     }
 
+    // 8. Xem danh sách
     @GetMapping("/danh-sach")
     public ResponseEntity<List<HoSoEntity>> xemDanhSach() {
         return ResponseEntity.ok(quanLyHoSoUseCase.layDanhSachHoSo());

@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
@@ -61,7 +62,7 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         // 7. Lưu hồ sơ
         HoSoEntity hoSo = new HoSoEntity();
         hoSo.setMaThuaDat(input.getMaThuaDat());
-        hoSo.setMaNguoiKhai(input.getMaNguoiDung()); // Map vào maChuDat
+        hoSo.setMaNguoiKhai(input.getMaNguoiDung());
         
         hoSo.setDienTichKhaiBao(input.getDienTichKhaiBao());
         hoSo.setDienTichThucTe(thuaDat.getDienTichGoc());
@@ -94,10 +95,9 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         String ttCu = h.getTrangThai();
         String ttMoi = dongY ? "DA_DUYET" : "TU_CHOI";
         h.setTrangThai(ttMoi);
-        // Note: Entity mới có trường ngayDuyet, cần set vào
         h.setNgayDuyet(LocalDateTime.now());
         hoSoRepo.save(h);
-        ghiNhatKy(maHoSo, 1L, ttCu, ttMoi, lyDo); // 1L là ID Admin tạm
+        ghiNhatKy(maHoSo, 1L, ttCu, ttMoi, lyDo); 
         return "Cập nhật thành công: " + ttMoi;
     }
 
@@ -132,18 +132,58 @@ public class QuanLyHoSoUseCase implements IQuanLyHoSoUseCase {
         return hoSoRepo.findAll(); 
     }
     
-    // Sửa: Gọi đúng hàm findByMaChuDat trong Repo
     @Override public List<HoSoEntity> layLichSuNopThue(Long maNguoiDung) { 
         return hoSoRepo.findByMaChuDat(maNguoiDung); 
     }
 
-    @Override public BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc) { 
-        // Logic dummy để không lỗi biên dịch, bạn có thể implement sau
-        return new BaoCaoThongKeDTO(); 
+    // --- LOGIC BÁO CÁO THỐNG KÊ (ĐÃ IMPLEMENT) ---
+    @Override 
+    public BaoCaoThongKeDTO layBaoCaoThongKe(Integer nam, String khuVuc) { 
+        // 1. Xác định năm (nếu null thì lấy năm hiện tại)
+        int namBaoCao = (nam == null) ? LocalDateTime.now().getYear() : nam;
+        
+        // 2. Lấy dữ liệu (Lưu ý: Cần có hàm findByNam trong Repo như đã hướng dẫn trước đó)
+        // Nếu Repo chưa có findByNam, bạn có thể dùng hoSoRepo.findAll() rồi filter bằng Java
+        List<HoSoEntity> list = hoSoRepo.findByNam(namBaoCao);
+
+        BaoCaoThongKeDTO dto = new BaoCaoThongKeDTO();
+        dto.setNam(namBaoCao);
+        dto.setTongSoHoSo(list.size());
+
+        // 3. Đếm số lượng theo trạng thái
+        dto.setSoHoSoChoDuyet((int) list.stream().filter(h -> "CHO_DUYET".equals(h.getTrangThai())).count());
+        dto.setSoHoSoBiTuChoi((int) list.stream().filter(h -> "TU_CHOI".equals(h.getTrangThai())).count());
+        dto.setSoHoSoGianLan((int) list.stream().filter(h -> Boolean.TRUE.equals(h.getDauHieuGianLan())).count());
+        
+        // Đếm số lượng Nợ và Hoàn thành
+        // Nợ = Đã duyệt nhưng chưa đóng tiền
+        dto.setSoHoSoDaDuyet((int) list.stream().filter(h -> "DA_DUYET".equals(h.getTrangThai())).count());
+        // Hoàn thành = Đã đóng tiền
+        dto.setSoHoSoHoanThanh((int) list.stream().filter(h -> "DA_NOP_TIEN".equals(h.getTrangThai())).count());
+
+        // 4. Tính toán tiền nong
+        // Tiền Nợ: Cộng cột soTienPhaiDong của hồ sơ DA_DUYET
+        double tienNo = list.stream()
+                .filter(h -> "DA_DUYET".equals(h.getTrangThai()))
+                .mapToDouble(h -> h.getSoTienPhaiNop() != null ? h.getSoTienPhaiNop() : 0)
+                .sum();
+        dto.setTongNoThue(tienNo);
+
+        // Tiền Đã Thu: Cộng cột soTienPhaiDong của hồ sơ DA_NOP_TIEN
+        double tienDaThu = list.stream()
+                .filter(h -> "DA_NOP_TIEN".equals(h.getTrangThai()))
+                .mapToDouble(h -> h.getSoTienPhaiNop() != null ? h.getSoTienPhaiNop() : 0)
+                .sum();
+        dto.setTongThuThue(tienDaThu);
+
+        // Tổng Phải Thu = Đã Thu + Nợ
+        dto.setTongTienPhaiThu(tienDaThu + tienNo);
+
+        return dto;
     }
 
-    // Fix: Cập nhật hàm xuất Excel để map đúng tên getter mới
-    @Override public ByteArrayInputStream xuatBaoCaoExcel() { 
+    @Override 
+    public ByteArrayInputStream xuatBaoCaoExcel() { 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Bao Cao");
             Row header = sheet.createRow(0);

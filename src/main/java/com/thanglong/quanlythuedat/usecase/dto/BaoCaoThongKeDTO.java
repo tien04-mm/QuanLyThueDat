@@ -4,17 +4,20 @@ import lombok.Data;
 
 @Data
 public class BaoCaoThongKeDTO {
-    private long tongSoHoSo;
+    private Integer nam;                // Năm báo cáo
+    private Integer tongSoHoSo;         // Tổng số hồ sơ
     
-    // [MỚI] Tổng tiền đã thu thực tế (Trạng thái HOAN_THANH)
-    private double tongThuThue; 
+    // --- SỐ LIỆU TÀI CHÍNH ---
+    private Double tongThuThue;         // Tiền thực tế đã thu (Đã nộp tiền)
+    private Double tongNoThue;          // Tiền đang nợ (Đã duyệt nhưng chưa nộp)
+    private Double tongTienPhaiThu;     // Tổng dự kiến (Thu + Nợ)
+
+    // --- SỐ LIỆU SỐ LƯỢNG ---
+    private Integer soHoSoChoDuyet;     // Đang chờ xử lý
     
-    // [MỚI] Tổng tiền nợ (Trạng thái DA_DUYET nhưng chưa đóng)
-    private double tongNoThue;
+    private Integer soHoSoDaDuyet;      // Đã duyệt (Đồng nghĩa với ĐANG NỢ)
+    private Integer soHoSoHoanThanh;    // Đã nộp tiền xong
+    private Integer soHoSoBiTuChoi;     // Bị từ chối
     
-    // Số liệu đếm
-    private long soHoSoChoDuyet;
-    private long soHoSoDaDuyet;
-    private long soHoSoBiTuChoi;
-    private long soHoSoGianLan; 
+    private Integer soHoSoGianLan;      // Có dấu hiệu sai lệch
 }
